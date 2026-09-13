@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎬 ویدیو دانلودر</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Tahoma, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh; color: #fff; padding: 20px;
+  }
+  .container { max-width: 640px; margin: 0 auto; }
+  header { text-align: center; margin: 20px 0 24px; }
+  header h1 { font-size: 28px; margin-bottom: 8px; }
+  header p { color: #a9b4d0; font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+  .chip {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; color: #dfe6f5;
+  }
+  .card {
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.3);
+  }
+  label { display: block; margin-bottom: 8px; font-size: 14px; color: #dfe6f5; font-weight: bold; }
+  .url-row { display: flex; gap: 8px; }
+  input[type=url], input[type=text] {
+    flex: 1; padding: 12px 14px; border-radius: 10px; font-size: 14px;
+    border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.3); color: #fff;
+    font-family: inherit; direction: ltr; text-align: left;
+  }
+  input:focus { outline: none; border-color: #e94560; }
+  button {
+    font-family: inherit; cursor: pointer; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: bold; transition: .2s;
+  }
+  button:disabled { opacity: .55; cursor: wait; }
+  .btn-paste { background: rgba(255,255,255,.12); color: #fff; padding: 0 16px; white-space: nowrap; }
+  .btn-paste:hover { background: rgba(255,255,255,.2); }
+  .btn-main {
+    width: 100%; padding: 13px; margin-top: 12px; color: #fff; font-size: 15px;
+    background: linear-gradient(90deg, #e94560, #ff6b6b);
+  }
+  .btn-main:hover { filter: brightness(1.1); }
+  .btn-dl {
+    width: 100%; padding: 14px; margin-top: 14px; color: #fff; font-size: 16px;
+    background: linear-gradient(90deg, #00b894, #00cec9);
+  }
+  .btn-dl:hover { filter: brightness(1.1); }
+  .hidden { display: none !important; }
+  .video-info { display: flex; gap: 14px; margin-bottom: 16px; }
+  .video-info img {
+    width: 150px; height: 90px; object-fit: cover; border-radius: 10px; flex-shrink: 0;
+    background: #000;
+  }
+  .video-info .meta { flex: 1; min-width: 0; }
+  .video-info .title { font-size: 14px; font-weight: bold; margin-bottom: 8px; line-height: 1.7;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .video-info .sub { font-size: 12px; color: #a9b4d0; line-height: 2; }
+  .fmt-row { display: flex; gap: 10px; margin: 6px 0 14px; }
+  .fmt-option { flex: 1; }
+  .fmt-option input { display: none; }
+  .fmt-option span {
+    display: block; text-align: center; padding: 12px; border-radius: 10px; font-size: 14px;
+    background: rgba(0,0,0,.3); border: 2px solid rgba(255,255,255,.15); cursor: pointer; transition: .2s;
+  }
+  .fmt-option input:checked + span { border-color: #00cec9; background: rgba(0,206,201,.15); }
+  select {
+    width: 100%; padding: 12px; border-radius: 10px; font-size: 14px; font-family: inherit;
+    border: 1px solid rgba(255,255,255,.2); background: rgba(0,0,0,.3); color: #fff;
+  }
+  select option { background: #1a1a2e; }
+  .status {
+    border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 2; margin-top: 12px;
+  }
+  .status.info { background: rgba(9,132,227,.2); border: 1px solid rgba(9,132,227,.5); }
+  .status.success { background: rgba(0,184,148,.2); border: 1px solid rgba(0,184,148,.5); }
+  .status.error { background: rgba(214,48,49,.2); border: 1px solid rgba(214,48,49,.5); }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px; vertical-align: -3px; margin-left: 6px;
+    border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .history-item {
+    background: rgba(0,0,0,.25); border-radius: 8px; padding: 9px 12px; font-size: 12px;
+    margin-top: 8px; color: #dfe6f5; line-height: 1.9;
+  }
+  .history-item a { color: #00cec9; text-decoration: none; font-weight: bold; }
+  .warn-box {
+    background: rgba(253,203,110,.12); border: 1px solid rgba(253,203,110,.5);
+    border-radius: 10px; padding: 10px 14px; font-size: 12px; line-height: 2; color: #ffeaa7; margin-top: 12px;
+  }
+  details.adv { margin: 4px 0 6px; background: rgba(0,0,0,.25); border-radius: 10px; padding: 10px 14px; }
+  details.adv summary { cursor: pointer; font-size: 13px; color: #dfe6f5; font-weight: bold; }
+  .adv-body { margin-top: 10px; }
+  .adv-note { font-size: 11px; color: #a9b4d0; line-height: 2; margin-top: 8px; }
+  .upd-row { display: flex; align-items: center; gap: 10px; }
+  #verText { flex: 1; font-size: 13px; color: #dfe6f5; }
+  .btn-upd { background: linear-gradient(90deg, #6c5ce7, #a29bfe); color: #fff; padding: 10px 22px; white-space: nowrap; }
+  .btn-upd:hover { filter: brightness(1.1); }
+  footer { text-align: center; color: #a9b4d0; font-size: 13px; margin: 18px 0 10px; line-height: 2.2; }
+  footer a { color: #00cec9; text-decoration: none; font-weight: bold; }
+  @media (max-width: 480px) {
+    .video-info { flex-direction: column; }
+    .video-info img { width: 100%; height: auto; }
+    header h1 { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🎬 ویدیو دانلودر</h1>
+    <p>لینک بده، کیفیت انتخاب کن، دانلود کن!</p>
+    <div class="chips">
+      <span class="chip">▶️ یوتیوب</span>
+      <span class="chip">📸 اینستاگرام</span>
+      <span class="chip">🎵 تیک‌تاک</span>
+      <span class="chip">🇮🇷 آپارات</span>
+      <span class="chip">➕ ۱۰۰۰+ سایت دیگر</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <label>🔗 لینک ویدیو:</label>
+    <div class="url-row">
+      <input type="url" id="url" placeholder="https://..." autocomplete="off">
+      <button class="btn-paste" onclick="pasteLink()">📋 چسباندن</button>
+    </div>
+    <button class="btn-main" id="btnCheck" onclick="checkLink()">🔍 بررسی لینک</button>
+  </div>
+
+  <div class="card hidden" id="infoCard">
+    <div class="video-info">
+      <img id="thumb" src="" alt="">
+      <div class="meta">
+        <div class="title" id="vTitle"></div>
+        <div class="sub" id="vMeta"></div>
+      </div>
+    </div>
+
+    <label>📦 فرمت خروجی:</label>
+    <div class="fmt-row">
+      <label class="fmt-option"><input type="radio" name="fmt" value="mp4" checked onchange="toggleQuality()"><span>🎬 ویدیو (MP4)</span></label>
+      <label class="fmt-option"><input type="radio" name="fmt" value="mp3" onchange="toggleQuality()"><span>🎵 صدا (MP3)</span></label>
+    </div>
+
+    <div id="qWrap">
+      <label>🎞️ کیفیت ویدیو:</label>
+      <select id="quality"></select>
+    </div>
+
+    <details class="adv">
+      <summary>⚙️ تنظیمات پیشرفته (ویدیوهای نیازمند ورود)</summary>
+      <div class="adv-body">
+        <label>🍪 خواندن کوکی از مرورگر <span style="font-weight:normal;font-size:11px;color:#a9b4d0">(فقط ویندوز/کامپیوتر)</span>:</label>
+        <select id="browser">
+          <option value="">بدون (پیش‌فرض)</option>
+          <option value="chrome">Chrome</option>
+          <option value="edge">Edge</option>
+          <option value="firefox">Firefox</option>
+          <option value="brave">Brave</option>
+          <option value="opera">Opera</option>
+        </select>
+        <div class="adv-note">اگه توی مرورگر وارد اون سایت شدی، انتخابش کن تا ویدیوهای نیازمند ورود هم دانلود بشن. روی اندروید کار نمی‌کند.</div>
+      </div>
+    </details>
+
+    <div class="warn-box hidden" id="ffmpegWarn">⚠️ روی این دستگاه FFmpeg نصب نیست؛ خروجی MP3 کار نمی‌کند. (MP4 مشکلی ندارد — راهنمای نصب در فایل README)</div>
+
+    <button class="btn-dl" id="btnDl" onclick="startDownload()">⬇️ دانلود</button>
+  </div>
+
+  <div id="statusWrap"></div>
+
+  <div class="card hidden" id="historyCard">
+    <label>📜 دانلودهای این جلسه:</label>
+    <div id="history"></div>
+  </div>
+
+  <div class="card">
+    <label>🔄 آپدیت موتور دانلود:</label>
+    <div class="upd-row">
+      <span id="verText">نسخه فعلی موتور: ...</span>
+      <button class="btn-upd" id="btnUpd" onclick="updateEngine()">🔄 آپدیت</button>
+    </div>
+    <div class="adv-note">اگه یه سایتی دانلود نکرد، اول آپدیت کن؛ معمولاً درست میشه. بعد از آپدیت، برنامه رو ببند و دوباره اجرا کن.</div>
+  </div>
+
+  <footer>👨‍💻 برنامه‌نویس: مهراد چناقچی<br>📸 IG: <a href="https://instagram.com/mehrad_chenaghchi_1990" target="_blank">mehrad_chenaghchi_1990</a></footer>
+</div>
+
+<script>
+let hasFFmpeg = true;
+
+async function apiStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    hasFFmpeg = d.ffmpeg;
+    const vt = document.getElementById('verText');
+    if (vt) vt.textContent = 'نسخه فعلی موتور: ' + (d.ytdlp_version || 'نامشخص');
+  } catch(e) {}
+}
+apiStatus();
+
+function showStatus(msg, type) {
+  document.getElementById('statusWrap').innerHTML =
+    `<div class="status ${type}">${msg}</div>`;
+}
+function clearStatus() { document.getElementById('statusWrap').innerHTML = ''; }
+
+function getBrowser() {
+  const el = document.getElementById('browser');
+  return el ? el.value : '';
+}
+
+async function updateEngine() {
+  const btn = document.getElementById('btnUpd');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> در حال آپدیت...';
+  showStatus('<span class="spinner"></span> در حال آپدیت موتور دانلود... (ممکنه ۱-۲ دقیقه طول بکشه ⏳)', 'info');
+  try {
+    const res = await fetch('/api/update', {method: 'POST'});
+    const d = await res.json();
+    if (!d.ok) { showStatus('❌ ' + d.error, 'error'); return; }
+    showStatus('✅ ' + d.message, 'success');
+    const vt = document.getElementById('verText');
+    if (vt && d.new) vt.textContent = 'نسخه فعلی موتور: ' + d.new + (d.changed ? ' (ری‌استارت کن! 🔁)' : '');
+  } catch(e) {
+    showStatus('❌ خطا در ارتباط با سرور.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 آپدیت';
+  }
+}
+
+async function pasteLink() {
+  try {
+    const t = await navigator.clipboard.readText();
+    if (t) document.getElementById('url').value = t.trim();
+  } catch(e) {
+    showStatus('مرورگر اجازه دسترسی به حافظه را نداد؛ دستی بچسبان (نگه دار → Paste).', 'info');
+  }
+}
+
+async function checkLink() {
+  const url = document.getElementById('url').value.trim();
+  if (!url) { showStatus('اول لینک را وارد کن! 🔗', 'error'); return; }
+  const btn = document.getElementById('btnCheck');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> در حال بررسی...';
+  showStatus('<span class="spinner"></span> در حال گرفتن مشخصات ویدیو... (چند ثانیه طول می‌کشد)', 'info');
+  document.getElementById('infoCard').classList.add('hidden');
+
+  try {
+    const res = await fetch('/api/info', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url, browser: getBrowser()})
+    });
+    const d = await res.json();
+    if (!d.ok) { showStatus('❌ ' + d.error, 'error'); return; }
+
+    document.getElementById('thumb').src = d.thumbnail || '';
+    document.getElementById('vTitle').textContent = d.title;
+    document.getElementById('vMeta').innerHTML = `👤 ${d.uploader} &nbsp;•&nbsp; ⏱ ${d.duration}`;
+    const q = document.getElementById('quality');
+    q.innerHTML = '';
+    d.qualities.forEach(o => {
+      const el = document.createElement('option');
+      el.value = o.id; el.textContent = o.label;
+      q.appendChild(el);
+    });
+    document.getElementById('infoCard').classList.remove('hidden');
+    document.getElementById('ffmpegWarn').classList.toggle('hidden', hasFFmpeg);
+    toggleQuality();
+    clearStatus();
+    document.getElementById('infoCard').scrollIntoView({behavior: 'smooth'});
+  } catch(e) {
+    showStatus('❌ خطا در ارتباط با سرور. مطمئن شو برنامه در حال اجراست.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 بررسی لینک';
+  }
+}
+
+function toggleQuality() {
+  const fmt = document.querySelector('input[name=fmt]:checked').value;
+  document.getElementById('qWrap').style.display = fmt === 'mp3' ? 'none' : 'block';
+  if (fmt === 'mp3' && !hasFFmpeg) {
+    document.getElementById('ffmpegWarn').classList.remove('hidden');
+  }
+}
+
+async function startDownload() {
+  const url = document.getElementById('url').value.trim();
+  const fmt = document.querySelector('input[name=fmt]:checked').value;
+  const quality = document.getElementById('quality').value;
+  const btn = document.getElementById('btnDl');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> در حال دانلود...';
+  showStatus('<span class="spinner"></span> در حال دانلود روی سرور... (بسته به حجم ویدیو و سرعت اینترنت، کمی صبر کن ⏳)', 'info');
+
+  try {
+    const res = await fetch('/api/download', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url, quality, format: fmt, browser: getBrowser()})
+    });
+    const d = await res.json();
+    if (!d.ok) { showStatus('❌ ' + d.error, 'error'); return; }
+
+    showStatus('✅ آماده شد! دانلود شروع می‌شود... اگه شروع نشد، از لیست پایین بزن روش.', 'success');
+    const a = document.createElement('a');
+    a.href = '/file/' + d.file_id;
+    a.download = d.filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    const hc = document.getElementById('historyCard');
+    hc.classList.remove('hidden');
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `✅ ${d.title} <br><a href="/file/${d.file_id}" download>⬇️ دانلود مجدد</a>`;
+    document.getElementById('history').prepend(item);
+  } catch(e) {
+    showStatus('❌ خطا در ارتباط با سرور.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬇️ دانلود';
+  }
+}
+
+document.getElementById('url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkLink();
+});
+</script>
+</body>
+</html>

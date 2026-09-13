@@ -1,0 +1,1 @@
+pkg update -y && pkg install -y python ffmpeg curl git && cp ~/video-downloader/cookies.txt ~/cookies.bak 2>/dev/null; rm -rf ~/video-downloader && git clone https://github.com/mehradjaan/video-downloader.git ~/video-downloader && cp ~/cookies.bak ~/video-downloader/cookies.txt 2>/dev/null; cd ~/video-downloader && pip install -r requirements.txt && bash setup-termux.sh && vd
