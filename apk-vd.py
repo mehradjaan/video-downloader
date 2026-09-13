@@ -6,7 +6,7 @@ import re
 import glob
 import yt_dlp
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 YOUTUBE_HOSTS = ("youtube.com", "youtu.be", "music.youtube.com")
 # ترتیب تلاش برای یوتیوب: پیش‌فرض، بعد کلاینت‌های مختلف
@@ -76,6 +76,8 @@ def _friendly(e):
     m = str(e).lower()
     if "unsupported url" in m:
         return "این لینک پشتیبانی نمی‌شود. لینک مستقیم صفحه ویدیو را بده."
+    if "requested format is not available" in m:
+        return "این پست ویدیوی قابل دانلودی ندارد (شاید فقط عکس باشد)."
     if "private" in m or "login required" in m or "log in" in m or "registered" in m:
         return "این ویدیو نیاز به ورود دارد. نسخه موبایل فقط ویدیوهای عمومی را پشتیبانی می‌کند."
     if "verification" in m or "verify your age" in m:
@@ -179,13 +181,15 @@ def download(url, quality, fmt, outdir, appdir, listener):
         if fmt == "m4a":
             o["format"] = "bestaudio[ext=m4a]/bestaudio[ext=mp4]/bestaudio/best"
         elif quality == "best":
-            o["format"] = "b[ext=mp4]/b"
+            # اول فرمت کامل (صدا+تصویر)، بعد فقط-تصویر (برای سایت‌هایی مثل پینترست)
+            o["format"] = "b[ext=mp4]/b/bv[ext=mp4]/bv"
         else:
             try:
                 h = int(quality)
             except ValueError:
                 h = 720
-            o["format"] = "b[height<=%d][ext=mp4]/b[height<=%d]/b[ext=mp4]/b" % (h, h)
+            o["format"] = ("b[height<=%d][ext=mp4]/b[height<=%d]/b[ext=mp4]/b/"
+                           "bv[height<=%d][ext=mp4]/bv[height<=%d]/bv[ext=mp4]/bv") % (h, h, h, h)
         return o
 
     try:
